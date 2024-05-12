@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Exam</title>
+    <style>
+        body, html {
+            font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background-color: #f4f4f9;
+            width: 100%;
+            height: 100%;
+        }
+        #exam-container {
+            background: white;
+            width: 600px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            position: relative;
+        }
+        #question {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        #choices {
+            margin: 20px 0;
+        }
+        #choices li {
+		padding: 8px;
+		background-color: #f0f0f0;
+		margin-bottom: 5px;
+		cursor: pointer;
+		opacity: 1;
+		transition: opacity 0.3s;
+		list-style: none;
+		position: relative; /* Ensures the pseudo-element positions correctly */
+		}
+
+		#choices li::before {
+		content: '';
+		display: block;
+		width: 10px;
+		height: 10px;
+		background-color: #0056b3;
+		border-radius: 50%;
+		position: absolute;
+		left: -20px; /* Adjust as needed */
+		top: 50%;
+		transform: translateY(-50%);
+		opacity: 0;  /* Initially hidden */
+		transition: opacity 0.3s;
+		}
+
+		#choices li.selected::before {
+		opacity: 1;  /* Visible when selected */
+		}
+
+		#choices li.selected {
+		background-color: #adc6ff;
+		opacity: 1;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .button:hover {
+            background-color: #003580;
+        }
+        #full-page-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            text-align: center;
+            z-index: 1000;
+		}	
+		
+			#timer {
+			position: absolute;
+			top: 10px;
+			right: 20px;
+			font-size: 16px;
+			background-color: rgba(255, 255, 255, 0.8);
+			padding: 5px 10px;
+			border-radius: 5px;
+		}
+			#timer::before {
+			content: '🕒';
+			margin-right: 5px;
+
+        }
+    </style>
+</head>
+<body>
+    <div id="exam-container">
+        <div id="question-number"></div>
+        <div id="question"></div>
+        <ul id="choices"></ul>
+        <div>
+            <button class="button" onclick="previousQuestion()">Previous</button>
+            <button class="button" onclick="nextQuestion()">Next</button>
+            <button class="button" onclick="submitExam()" style="float: right;">Submit Exam</button>
+        </div>
+        <div id="timer"></div>
+    </div>
+    <div id="full-page-message"></div>
+    <script>
+        const questions = [
+            {"question": "What does HTML stand for?", "choices": ["Hyperlinks and Text Markup Language", "Hyper Text Markup Language", "Home Tool Markup Language"], "correctAnswer": 1},
+            {"question": "Who is making the Web standards?", "choices": ["Mozilla", "Google", "The World Wide Web Consortium", "Microsoft"], "correctAnswer": 2},
+            {"question": "Choose the correct HTML element for the largest heading:", "choices": ["<h1>", "<head>", "<heading>", "<h6>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML element for inserting a line break?", "choices": ["<br>", "<break>", "<lb>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for adding a background color?", "choices": ["<background>yellow</background>", "<body bg=\u201dyellow\u201d>", "<body style=\u201dbackground-color:yellow\u201d>"], "correctAnswer": "c"},
+            {"question": "Choose the correct HTML element to define important text:", "choices": ["<b>", "<i>", "<important>", "<strong>"], "correctAnswer": "d"},
+            {"question": "Choose the correct HTML element to define emphasized text:", "choices": ["<em>", "<i>", "<italic>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for creating a hyperlink?", "choices": ["<a> https://www.w3schools.com</a>", "<a name= https://www.w3schools.com>W3Schools.com</a>", "<a href=\u201d https://www.w3schools.com\u201d>W3schools</a>", "<a url=\u201d https://www.w3schools.com\u201d>W3schools.com</a>"], "correctAnswer": "c"},
+            {"question": "Which character is used to indicate an end tag?", "choices": ["*", "<", "^", "/"], "correctAnswer": "d"},
+            {"question": "How can you open a link in a new tab/browser window?", "choices": ["<a href=\u201durl\u201dnew>", "<a href=\u201durl\u201dtarget=\u201d_blank\u201d>", "<a href=\u201durl\u201dtarget=\u201dnew\u201d>"], "correctAnswer": "b"},
+            {"question": "Which of these elements are all <table> elements?", "choices": ["<table> <tr> <tt>", "<thead> <body> <tr>", "<table> <head> <tfoot>", "<table> <tr> <td>"], "correctAnswer": "d"},
+            {"question": "Inline elements are normally displayed without starting a new line.", "choices": ["False", "True"], "correctAnswer": "b"},
+            {"question": "How can you make a numbered list?", "choices": ["<ul>", "<dl>", "<ol>", "<list>"], "correctAnswer": "c"},
+            {"question": "How can you make a bulleted list?", "choices": ["<ul>", "<list>", "<ol>", "<dl>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for making a checkbox?", "choices": ["<input type =\u201dcheckbox\u201d>", "Input type=\u201dcheck\u201d>", "<check>", "<chechbox>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for making a text input field?", "choices": ["<input type=\u201dtext\u201d>", "<textinput type=\u201dtext\u201d>", "<input type=\u201dtextfield\u201d>", "<textfield>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for making a drop-down list?", "choices": ["<input type=\u201dlist\u201d>", "<input type=\u201ddropdown\u201d>", "<select>", "<list>"], "correctAnswer": "c"},
+            {"question": "What is the correct HTML for making a text area?", "choices": ["<input type=\u201dtextbox\u201d>", "<input type=\u201dtextarea\u201d>", "<textarea>"], "correctAnswer": "c"},
+            {"question": "What is the correct HTML for inserting an image?", "choices": ["<img src=\u201dimage.gif\u201d alt=\u201dMyImage\u201d>", "<img href=\u201dimage.gif\u201d alt=\u201dMyImage\u201d>", "<image src=\u201dimage.gif\u201d alt=\u201dMyImage\u201d>", "<img alt= \u201dMyImage\u201d>image.gif</img>"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML for inserting a background image?", "choices": ["<body style=background-image:url(background.gif)\u201d>", "<background img=\u201dbackground.gif\u201d>", "<body bg=\u201dbackground.gif\u201d>"], "correctAnswer": "a"},
+            {"question": "An <iframe> is used to display a web page within a web page.", "choices": ["False", "True", "There is no such thing as an <iframe>"], "correctAnswer": "b"},
+            {"question": "HTML comments start with <!-- and end with -->", "choices": ["False", "True"], "correctAnswer": "b"},
+            {"question": "Block elements are normally displayed without starting a new line.", "choices": ["True", "False"], "correctAnswer": "b"},
+            {"question": "Which HTML element defines the title of a document?", "choices": ["<title>", "<meta>", "<head>"], "correctAnswer": "a"},
+            {"question": "Which HTML attribute specifies an alternate text for an image if the image cannot be displayed?", "choices": ["Longdesc", "alt", "title", "src"], "correctAnswer": "b"},
+            {"question": "Which doctype is correct for HTML5?", "choices": ["<!DOCTYPE html>", "<!DOCTYPE HTML5>", "<!DOCTYPE HTML PUBLIC\u201d-//W3C//DTD HTML 5.0//EN\u201d http://www.w3.org/TR/html5/strict.dtd>"], "correctAnswer": "a"},
+            {"question": "Which HTML element is used to specify a footer for a document or section?", "choices": ["<footer>", "<bottom>", "<section>"], "correctAnswer": "a"},
+            {"question": "In HTML you can embed SVG elements directly into an HTML page.", "choices": ["True", "False"], "correctAnswer": "a"},
+            {"question": "What is the correct HTML element for playing video files?", "choices": ["<movie>", "<media>", "<video>"], "correctAnswer": "c"},
+            {"question": "What is the correct HTML element for playing audio files?", "choices": ["<sound>", "<mp3>", "<audio>"], "correctAnswer": "c"},
+            {"question": "The HTML global attribute \"contenteditable\" is used to:", "choices": ["Update content from the server", "Return the position of the first found occurrence of content inside a string", "Specifies a context menu for an element. The menu appears when a user right-clicks on the element", "Specify whether the content of an element should be editable or not"], "correctAnswer": "d"},
+            {"question": "In HTML onblur and onfocus are:", "choices": ["HTML elements", "Style attributes", "Event attributes"], "correctAnswer": "c"},
+            {"question": "Graphics defined by SVG is in which format?", "choices": ["HTML", "CSS", "XML"], "correctAnswer": "c"},
+            {"question": "The HTML <canvas> element is used to:", "choices": ["Manipulate data in MySQL", "Create draggable elements", "Display database records", "Draw graphics"], "correctAnswer": "d"},
+            {"question": "In HTML which attribute is used to specify that an input field must be filled out?", "choices": ["Formvalidate", "Placeholder", "Required", "Validate"], "correctAnswer": "c"},
+            {"question": "Which input type defines a slider control?", "choices": ["Slider", "Controls", "Range", "Search"], "correctAnswer": "c"},
+            {"question": "Which HTML element is used to display a scalar measurement within a range?", "choices": ["<range>", "<gauge>", "<meter>", "<measure>"], "correctAnswer": "c"},
+            {"question": "Which HTML element defines navigation links?", "choices": ["<navigate>", "<nav>", "<navigation>"], "correctAnswer": "b"},
+            {"question": "In HTML what does the <aside> element define?", "choices": ["Content aside from the page content", "A navigation list to be shown at the left side of the page", "The ASCII character-set; to send information between computers on the internet"], "correctAnswer": "a"},
+            {"question": "Which HTML element is used to specify a header for a document or section?", "choices": ["<head>", "<header>", "<top>", "<section>"], "correctAnswer": "b"}
+        ];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalSeconds = 0;
+        let timer;
+        let answered = [];
+
+        window.onload = function() {
+            startTimer();
+            showQuestion(currentQuestionIndex);
+            document.addEventListener("visibilitychange", function() {
+                if (document.visibilityState === 'hidden') {
+                    endExam(true);
+                }
+            });
+        };
+
+        function startTimer() {
+            timer = setInterval(function() {
+                totalSeconds++;
+                document.getElementById('timer').innerText = `Time: ${totalSeconds} seconds`;
+            }, 1000);
+        }
+
+        function showQuestion(index) {
+            const question = questions[index];
+            document.getElementById('question-number').innerText = "Question " + (index + 1) + " of " + questions.length;
+            document.getElementById('question').innerText = question.question;
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+            question.choices.forEach(function(choice, i) {
+                const li = document.createElement('li');
+                li.innerText = choice;
+                li.onclick = function() { selectAnswer(i, index); };
+                choicesContainer.appendChild(li);
+            });
+            if (answered[index] != null) {
+                choicesContainer.children[answered[index]].classList.add('selected');
+            }
+        }
+
+        function selectAnswer(selectedIndex, questionIndex) {
+            const choices = document.getElementById('choices').children;
+            const previouslySelected = answered[questionIndex];
+            answered[questionIndex] = selectedIndex;
+
+            for (let i = 0; i < choices.length; i++) {
+                choices[i].classList.remove('selected');
+            }
+            choices[selectedIndex].classList.add('selected');
+
+            if (previouslySelected != null) {
+                if (previouslySelected === questions[questionIndex].correctAnswer) {
+                    score--; 
+                }
+            }
+            if (selectedIndex === questions[questionIndex].correctAnswer) {
+                score++;
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        function submitExam() {
+            endExam(false);
+        }
+
+        function endExam(cheated) {
+            clearInterval(timer);
+            let message = cheated ? "You have tried to cheat, please try again" : `Exam finished! Your score: ${score}, Time taken: ${totalSeconds} seconds`;
+            document.getElementById('full-page-message').style.display = 'flex';
+            document.getElementById('full-page-message').innerText = message;
+        }
+    </script>
+</body>
+</html>
