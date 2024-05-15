@@ -116,6 +116,12 @@ var allowed_seconds_for_cheating = 60;
 var timer;
 var answered = [];
 
+var timer_el = document.getElementById('timer');
+var question_number_el = document.getElementById('question-number');
+var question_el = document.getElementById('question');
+var choises_el = document.getElementById('choices');
+var full_page_message_el = document.getElementById('full-page-message');
+
 
 //////////////////////////////////////////////////
 const questions = [
@@ -203,7 +209,7 @@ function start_timer() {
         } 
 
         total_seconds++;
-        document.getElementById('timer').innerText = 'Time: '+total_seconds+' seconds';
+        timer_el.innerText = 'Time: '+total_seconds+' seconds';
         
         console.log('total_seconds',total_seconds);
         console.log('seconds_in_focus',seconds_in_focus);
@@ -213,25 +219,22 @@ function start_timer() {
 
 //////////////////////////////////////////////////
 function show_question(index) {
-    const question_object = questions[index];
+    var question_object = questions[index];
     
-    document.getElementById('question-number').innerText 
-        = "Question " + (index + 1) + " of " + questions.length;
-    document.getElementById('question').innerText 
-        = question_object.question;
+    question_number_el.innerText = "Question " + (index + 1) + " of " + questions.length;
+    question_el.innerText = question_object.question;
     
-    var choises_element = document.getElementById('choices');
-    choises_element.innerHTML = '';
+    choises_el.innerHTML = '';
     
     question_object.choices.forEach(function(choice, i) {
         var li = document.createElement('li');
         li.innerText = choice;
         li.onclick = function() { select_answer(i, index); };
-        choises_element.appendChild(li);
+        choises_el.appendChild(li);
     });
     
     if (answered[index] != null) {
-        choises_element.children[answered[index]].classList.add('selected');
+        choises_el.children[answered[index]].classList.add('selected');
     }
 }
 
@@ -287,9 +290,13 @@ function submit_exam() {
 //////////////////////////////////////////////////
 function end_exam(cheated) {
     clearInterval(timer);
-    let message = cheated ? "You have tried to cheat, please try again" : `Exam finished! Your score: ${score}, Time taken: ${total_seconds} seconds`;
-    document.getElementById('full-page-message').style.display = 'flex';
-    document.getElementById('full-page-message').innerText = message;
+    var message = 
+        cheated 
+        ? "You have tried to cheat, please try again" 
+        : 'Exam finished! Your score: '+score+', Time taken: '+total_seconds+' seconds';
+    
+    full_page_message_el.style.display = 'flex';
+    full_page_message_el.innerText = message;
 
     console.log('total_seconds',total_seconds);
     console.log('seconds_in_focus',seconds_in_focus);
