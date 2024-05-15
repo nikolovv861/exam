@@ -108,7 +108,7 @@
 //////////////////////////////////////////////////
 var currentQuestionIndex = 0;
 var score = 0;
-var totalSeconds = 0;
+var total_seconds = 0;
 var timer;
 var answered = [];
 
@@ -159,7 +159,7 @@ const questions = [
 
 //////////////////////////////////////////////////
 window.onload = function() {
-    startTimer();
+    start_timer();
     showQuestion(currentQuestionIndex);
     
     // cheating tester
@@ -178,10 +178,10 @@ window.onload = function() {
 };
 
 //////////////////////////////////////////////////
-function startTimer() {
+function start_timer() {
     timer = setInterval(function() {
-        totalSeconds++;
-        document.getElementById('timer').innerText = `Time: ${totalSeconds} seconds`;
+        total_seconds++;
+        document.getElementById('timer').innerText = 'Time: '+total_seconds+' seconds';
     }, 1000);
 }
 
@@ -248,7 +248,7 @@ function submitExam() {
 //////////////////////////////////////////////////
 function endExam(cheated) {
     clearInterval(timer);
-    let message = cheated ? "You have tried to cheat, please try again" : `Exam finished! Your score: ${score}, Time taken: ${totalSeconds} seconds`;
+    let message = cheated ? "You have tried to cheat, please try again" : `Exam finished! Your score: ${score}, Time taken: ${total_seconds} seconds`;
     document.getElementById('full-page-message').style.display = 'flex';
     document.getElementById('full-page-message').innerText = message;
 }
