@@ -109,6 +109,8 @@
 var currentQuestionIndex = 0;
 var score = 0;
 var total_seconds = 0;
+var seconds_in_focus = 0;
+var seconds_in_cheating = 0;
 var timer;
 var answered = [];
 
@@ -165,14 +167,14 @@ window.onload = function() {
     // cheating tester
     document.addEventListener('visibilitychange', function() {
         var now = new Date().toISOString().slice(0, 19);
-        console.log('visibilitychange', now);
-        console.log(document.visibilityState);
+        //console.log('visibilitychange', now);
+        //console.log(document.visibilityState);
         
-        if (document.hidden) console.log('The page is not in focus.');
-        else console.log('The page is in focus.');
+        //if (document.hidden) console.log('The page is not in focus.');
+        //else console.log('The page is in focus.');
         
         if (document.visibilityState === 'hidden') {
-            endExam(true);
+            end_exam(true);
         }
     });
 };
@@ -180,6 +182,10 @@ window.onload = function() {
 //////////////////////////////////////////////////
 function start_timer() {
     timer = setInterval(function() {
+
+        if(document.hidden) seconds_in_cheating += 1;
+        else seconds_in_focus += 1;
+
         total_seconds++;
         document.getElementById('timer').innerText = 'Time: '+total_seconds+' seconds';
     }, 1000);
@@ -242,15 +248,19 @@ function previousQuestion() {
 
 //////////////////////////////////////////////////
 function submitExam() {
-    endExam(false);
+    end_exam(false);
 }
 
 //////////////////////////////////////////////////
-function endExam(cheated) {
+function end_exam(cheated) {
     clearInterval(timer);
     let message = cheated ? "You have tried to cheat, please try again" : `Exam finished! Your score: ${score}, Time taken: ${total_seconds} seconds`;
     document.getElementById('full-page-message').style.display = 'flex';
     document.getElementById('full-page-message').innerText = message;
+
+    console.log('total_seconds',total_seconds);
+    console.log('seconds_in_focus',seconds_in_focus);
+    console.log('seconds_in_cheating',seconds_in_cheating);
 }
 </script>
 </body>
