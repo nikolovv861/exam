@@ -103,6 +103,16 @@
 <div id="full-page-message"></div>
 
 <script>
+
+// Global
+//////////////////////////////////////////////////
+var currentQuestionIndex = 0;
+var score = 0;
+var totalSeconds = 0;
+var timer;
+var answered = [];
+
+
 //////////////////////////////////////////////////
 const questions = [
     {"question": "What does HTML stand for?", "choices": ["Hyperlinks and Text Markup Language", "Hyper Text Markup Language", "Home Tool Markup Language"], "correctAnswer": 1},
@@ -148,17 +158,19 @@ const questions = [
 ];
 
 //////////////////////////////////////////////////
-let currentQuestionIndex = 0;
-let score = 0;
-let totalSeconds = 0;
-let timer;
-let answered = [];
-
-//////////////////////////////////////////////////
 window.onload = function() {
     startTimer();
     showQuestion(currentQuestionIndex);
-    document.addEventListener("visibilitychange", function() {
+    
+    // cheating tester
+    document.addEventListener('visibilitychange', function() {
+        var now = new Date().toISOString().slice(0, 19);
+        console.log('visibilitychange', now);
+        console.log(document.visibilityState);
+        
+        if (document.hidden) console.log('The page is not in focus.');
+        else console.log('The page is in focus.');
+        
         if (document.visibilityState === 'hidden') {
             endExam(true);
         }
