@@ -115,17 +115,43 @@
         justify-content: center;
         background: white;
         outline: 15px dashed #ffffff;
+		display: none;
+	}
+	#choose-mode-text {
+		text-align: center;
+		margin-bottom: 20px;
+		font-size: 48px;
+		font-weight: bold;
+		color: #333;
     }
+	#start-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+	}
+	.start-button {
+    font-size: 50px;
+    padding: 40px;
+    margin: 20px;
+	width: 250px;
+	}
 </style>
 </head>
 <body>
-<div id="exam-container" class="container">
+<div id="start-buttons">
+	<h1 id="choose-mode-text">Choose your mode!</h1>
+    <button class="btn btn-primary start-button" onclick="start_exam('training')">Training</button>
+    <button class="btn btn-success start-button" onclick="start_exam('exam')">Exam  </button>
+</div>
+<div id="exam-container" class="container" style="display: none;">
     <div id="question-number" class="h5 text-center mb-3"></div>
     <div id="timer" class="badge bg-secondary">Time: 0 seconds</div>
     <div id="question" class="h4 mb-3 text-center mt-3"></div>
     <ul id="choices" class="list-group"></ul>
 </div>
-<div class="mt-3 text-center quiz-actions">
+<div class="mt-3 text-center quiz-actions" style="display: none;">
     <button id="previous-button" class="btn btn-lg btn-primary me-2" onclick="previous_question()">Previous</button>
     <button class="btn btn-lg btn-primary ms-2" onclick="next_question()">Next</button>
     <button id="submit-button" class="btn btn-lg btn-success ms-2" onclick="submit_exam()">Submit Exam</button>
@@ -141,11 +167,13 @@ var score = 0;
 var total_seconds = 0;
 var seconds_in_focus = 0;
 var seconds_in_cheating = 0;
-var allowed_seconds_for_cheating = 60;
+var allowed_seconds_for_cheating = 0;
 //var allowed_seconds_for_cheating = 0;
 var timer;
 var answered = [];
-var exam_in_progress = true;
+var exam_in_progress = false;
+var is_exam_mode = false
+var is_training_mode = false
 
 var timer_el = document.getElementById('timer');
 var question_number_el = document.getElementById('question-number');
@@ -156,7 +184,7 @@ var previous_button_el = document.getElementById('previous-button');
 
 
 //////////////////////////////////////////////////
-const questions = [
+var questions = [
     {
         "question": "What does HTML stand for?", 
         "choices": [
@@ -206,20 +234,41 @@ const questions = [
     {"question": "In HTML what does the <aside> element define?", "choices": ["Content aside from the page content", "A navigation list to be shown at the left side of the page", "The ASCII character-set; to send information between computers on the internet"], "correct_answer": "a"},
     {"question": "Which HTML element is used to specify a header for a document or section?", "choices": ["<head>", "<header>", "<top>", "<section>"], "correct_answer": "b"}
 ];
+//////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////////
 window.onload = function() {
-    start_timer();
-    show_question(current_question_index);
+	document.getElementById('exam-container').style.display = 'none';
+    document.getElementById('start-buttons').style.display = 'flex';
+	document.querySelector('.quiz-actions').style.display = 'none';
+};
+function start_exam(mode) {
+    exam_in_progress = true;  
+	is_exam_mode = (mode === 'exam');
+
     
+    document.getElementById('start-buttons').style.display = 'none';
+    document.getElementById('exam-container').style.display = 'block';
+	document.querySelector('.quiz-actions').style.display = 'flex';
+	
+	start_timer();
+    show_question(current_question_index);
+	
+	if (is_exam_mode) {
+        document.removeEventListener('visibilitychange', visibilityChangeHandler);
+    }
+	
+	
     // cheating tester
+
     document.addEventListener('visibilitychange', function() {
         var now = new Date().toISOString().slice(0, 19);
         console.log('visibilitychange', now);
         console.log(document.visibilityState);
 
         // Check if the exam is in progress and user navigates away
-        if (exam_in_progress && allowed_seconds_for_cheating == 0 && document.visibilityState === 'hidden') {
+        if (exam_in_progress && is_exam_mode && allowed_seconds_for_cheating == 0 && document.visibilityState === 'hidden') {
             fail_exam_for_cheating();
         }
     });
@@ -232,9 +281,9 @@ function start_timer() {
         if(document.hidden) seconds_in_cheating += 1;
         else seconds_in_focus += 1;
         
-        if(seconds_in_cheating > allowed_seconds_for_cheating) {
+        if (is_exam_mode && seconds_in_cheating > allowed_seconds_for_cheating) {
             fail_exam_for_cheating();
-        } 
+        }
 
         total_seconds++;
         timer_el.innerText = 'Time: '+total_seconds+' seconds';
