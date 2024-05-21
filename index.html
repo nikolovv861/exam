@@ -125,17 +125,27 @@
 		color: #333;
     }
 	#start-buttons {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
 	}
 	.start-button {
-    font-size: 50px;
-    padding: 40px;
-    margin: 20px;
-	width: 250px;
+		font-size: 50px;
+		padding: 40px;
+		margin: 20px;
+		width: 250px;
+	}
+	#cheating-time {
+		display: none; 
+		position: fixed; 
+		bottom: 20px; 
+		right: 20px; 
+		font-size: 16px; 
+		background-color: rgba(255, 0, 0, 0.8);
+		padding: 5px 10px;
+		border-radius: 5px;
 	}
 </style>
 </head>
@@ -155,6 +165,9 @@
     <button id="previous-button" class="btn btn-lg btn-primary me-2" onclick="previous_question()">Previous</button>
     <button class="btn btn-lg btn-primary ms-2" onclick="next_question()">Next</button>
     <button id="submit-button" class="btn btn-lg btn-success ms-2" onclick="submit_exam()">Submit Exam</button>
+</div>
+<div id="cheating-time" class="badge bg-danger" style="display: none; position: fixed; bottom: 20px; right: 20px;">
+    Cheating time left: <span id="cheating-time-left">0</span> seconds
 </div>
 <div id="full-page-message"></div>
 
@@ -242,21 +255,37 @@ window.onload = function() {
 	document.getElementById('exam-container').style.display = 'none';
     document.getElementById('start-buttons').style.display = 'flex';
 	document.querySelector('.quiz-actions').style.display = 'none';
+	document.getElementById('cheating-time').style.display = 'none';
 };
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
 function start_exam(mode) {
     exam_in_progress = true;  
 	is_exam_mode = (mode === 'exam');
+	
+	shuffle(questions);
 
     
     document.getElementById('start-buttons').style.display = 'none';
     document.getElementById('exam-container').style.display = 'block';
 	document.querySelector('.quiz-actions').style.display = 'flex';
 	
+	if (is_exam_mode) {
+        document.getElementById('cheating-time').style.display = 'block';
+	}
 	start_timer();
     show_question(current_question_index);
 	
 	if (is_exam_mode) {
         document.removeEventListener('visibilitychange', visibilityChangeHandler);
+		
+    }
+	if (is_exam_mode) {
+        document.getElementById('cheating-time').style.display = 'block';
     }
 	
 	
@@ -277,9 +306,11 @@ function start_exam(mode) {
 //////////////////////////////////////////////////
 function start_timer() {
     timer = setInterval(function() {
-
-        if(document.hidden) seconds_in_cheating += 1;
-        else seconds_in_focus += 1;
+        if (document.hidden) {
+            seconds_in_cheating += 1;
+        } else {
+            seconds_in_focus += 1;
+        }
         
         if (is_exam_mode && seconds_in_cheating > allowed_seconds_for_cheating) {
             fail_exam_for_cheating();
@@ -287,12 +318,18 @@ function start_timer() {
 
         total_seconds++;
         timer_el.innerText = 'Time: '+total_seconds+' seconds';
+		
+		if (is_exam_mode) {
+            var cheating_time_left = allowed_seconds_for_cheating - seconds_in_cheating;
+            document.getElementById('cheating-time-left').innerText = cheating_time_left;
+        }
         
         console.log('total_seconds',total_seconds);
         console.log('seconds_in_focus',seconds_in_focus);
         console.log('seconds_in_cheating',seconds_in_cheating);
     }, 1000);
 }
+
 
 //////////////////////////////////////////////////
 function show_question(index) {
