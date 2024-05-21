@@ -74,12 +74,27 @@
         display: none;
         justify-content: center;
         align-items: center;
-        font-size: 30px;
-        text-align: center;
         z-index: 1000;
-    } 
+    }
+    #final-message {
+        background-color: #fff;
+        color: #333;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        font-size: 20px;
+        line-height: 1.5;
+    }
+    #final-message h2 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    #final-message p {
+        font-size: 22px;
+        margin: 10px 0;
+    }
     #timer {
-        /* position: absolute; */
         top: 20px;
         right: 20px;
         font-size: 16px;
@@ -89,10 +104,6 @@
         display: block;
         margin: auto;
         width: fit-content;
-    }
-    #timer::before {
-        content: 'ðŸ•’';
-        margin-right: 5px;
     }
     .quiz-actions {
         position: fixed;
@@ -105,7 +116,6 @@
         background: white;
         outline: 15px dashed #ffffff;
     }
-
 </style>
 </head>
 <body>
@@ -135,6 +145,7 @@ var allowed_seconds_for_cheating = 60;
 //var allowed_seconds_for_cheating = 0;
 var timer;
 var answered = [];
+var exam_in_progress = true;
 
 var timer_el = document.getElementById('timer');
 var question_number_el = document.getElementById('question-number');
@@ -204,15 +215,11 @@ window.onload = function() {
     // cheating tester
     document.addEventListener('visibilitychange', function() {
         var now = new Date().toISOString().slice(0, 19);
-        //console.log('visibilitychange', now);
-        //console.log(document.visibilityState);
-        
-        //if (document.hidden) console.log('The page is not in focus.');
-        //else console.log('The page is in focus.');
-        
-        if (allowed_seconds_for_cheating == 0 
-            && document.visibilityState === 'hidden'
-        ) {
+        console.log('visibilitychange', now);
+        console.log(document.visibilityState);
+
+        // Check if the exam is in progress and user navigates away
+        if (exam_in_progress && allowed_seconds_for_cheating == 0 && document.visibilityState === 'hidden') {
             fail_exam_for_cheating();
         }
     });
@@ -328,17 +335,38 @@ function submit_exam() {
 //////////////////////////////////////////////////
 function end_exam(cheated) {
     clearInterval(timer);
-    var message = 
-        cheated 
-        ? 'You have tried to cheat, please try again' 
-        : 'Exam finished! Your score: '+score+', Time taken: '+total_seconds+' seconds';
-    
-    full_page_message_el.style.display = 'flex';
-    full_page_message_el.innerText = message;
+	exam_in_progress = false;
+	
+    var total_questions = questions.length;
+    var percentage = (score / total_questions) * 100;
+    var grade;
 
-    console.log('total_seconds',total_seconds);
-    console.log('seconds_in_focus',seconds_in_focus);
-    console.log('seconds_in_cheating',seconds_in_cheating);
+    if (percentage >= 90) {
+        grade = '6';
+    } else if (percentage >= 80) {
+        grade = '5';
+    } else if (percentage >= 70) {
+        grade = '4';
+    } else if (percentage >= 60) {
+        grade = '3';
+    } else {
+        grade = '2';
+    }
+
+    var messageContent = cheated
+        ? '<h2>Exam Failed!</h2><p>You have tried to cheat, please try again.</p>'
+        : `<h2>Exam Finished!</h2>
+           <p>Your score: ${score} out of ${total_questions}</p>
+           <p>Percentage: ${percentage.toFixed(2)}%</p>
+           <p>Grade: ${grade}</p>
+           <p>Time taken: ${total_seconds} seconds</p>`;
+
+    full_page_message_el.style.display = 'flex';
+    full_page_message_el.innerHTML = '<div id="final-message">' + messageContent + '</div>';
+
+    console.log('total_seconds', total_seconds);
+    console.log('seconds_in_focus', seconds_in_focus);
+    console.log('seconds_in_cheating', seconds_in_cheating);
 }
 </script>
 </body>
