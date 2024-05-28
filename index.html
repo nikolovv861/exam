@@ -31,7 +31,7 @@
     #navigation-menu {
 	width: 100%; 
    	display: grid;
-    	grid-template-columns: repeat(4, 1fr); 
+    	grid-template-columns: repeat(2, 1fr); 
     	gap: 5px; 
     	padding: 10px;
     	background-color: #f4f4f9;
@@ -630,7 +630,61 @@ window.onload = function() {
     document.getElementById('start-buttons').style.display = 'flex';
 	document.querySelector('.quiz-actions').style.display = 'none';
 	document.getElementById('cheating-time').style.display = 'none';
+	
+	document.addEventListener('keydown', function(event) {
+        if (exam_in_progress) {
+            if (event.key === 'ArrowRight') {
+                next_question();
+            } else if (event.key === 'ArrowLeft') {
+                previous_question();
+            } else if (event.key === 'Enter') {
+                submit_exam();
+            } else if (event.key === 'ArrowDown') {
+                navigate_answers(1);
+            } else if (event.key === 'ArrowUp') {
+                navigate_answers(-1);
+            }
+        }
+    });
 };
+function navigate_answers(direction) {
+    var choices = document.getElementById('choices').children;
+    var selected_index = Array.prototype.findIndex.call(choices, choice => choice.classList.contains('selected'));
+
+    if (selected_index !== -1) {
+        choices[selected_index].classList.remove('selected');
+    }
+
+    selected_index = (selected_index + direction + choices.length) % choices.length;
+    choices[selected_index].classList.add('selected');
+
+    // Mark the selected answer
+    select_answer(selected_index, current_question_index);
+}
+
+function select_answer(selected_index, question_index) {
+    var choices_children = document.getElementById('choices').children;
+    var previously_selected_answer = answered[question_index];
+    answered[question_index] = selected_index;
+
+    for (let i = 0; i < choices_children.length; i++) {
+        choices_children[i].classList.remove('selected');
+    }
+    choices_children[selected_index].classList.add('selected');
+
+    var navButton = document.getElementById('nav-btn-' + question_index);
+    navButton.classList.remove('btn-outline-secondary');
+    navButton.classList.add('btn-success');
+
+    if (previously_selected_answer != null) {
+        if (previously_selected_answer === questions[question_index].correct_answer) {
+            score--;
+        }
+    }
+    if (selected_index === questions[question_index].correct_answer) {
+        score++;
+    }
+}
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
