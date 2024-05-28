@@ -21,12 +21,24 @@
     }
 	
     #header {
-    margin-bottom: 10px;
-    text-align: center;
+    	margin-bottom: 10px;
+    	text-align: center;
     }
 
     #logo {
-    max-width: 150px;
+    	max-width: 150px;
+    }
+    #navigation-menu {
+	width: 100%; 
+   	display: grid;
+    	grid-template-columns: repeat(4, 1fr); 
+    	gap: 5px; 
+    	padding: 10px;
+    	background-color: #f4f4f9;
+    }
+    #navigation-menu button {
+    	width: 30px; 
+    	font-size: 14px; 
     }
     #exam-container {
         background: white;
@@ -37,6 +49,7 @@
     	outline: 10px dashed #ffffff; 
     	width: 80%; 
     	overflow: auto; 
+	margin-left: 220px;
     }
     #question {
         font-size: 20px;
@@ -182,7 +195,11 @@
     <button class="btn btn-primary start-button" onclick="start_exam('training')">Training</button>
     <button class="btn btn-success start-button" onclick="start_exam('exam')">Exam  </button>
 </div>
-<div id="exam-container" class="container" style="display: none;">
+<div class="d-flex">
+    <div id="navigation-menu" class="p-2" style="width: 200px; height: 100vh; overflow-y: auto; position: fixed; top: 0; left: 0;">
+        
+</div>
+<div id="exam-container" class="container" style="display: none; ">
     <div id="question-number" class="h5 text-center mb-3"></div>
     <div id="timer" class="badge bg-secondary">Time: 0 seconds</div>
     <div id="question" class="h4 mb-3 text-center mt-3"></div>
@@ -630,6 +647,7 @@ function start_exam(mode) {
     
     	document.getElementById('start-buttons').style.display = 'none';
     	document.getElementById('exam-container').style.display = 'block';
+	document.getElementById('navigation-menu').style.display = 'block';
 	document.querySelector('.quiz-actions').style.display = 'flex';
 	
 	if (is_exam_mode) {
@@ -639,6 +657,8 @@ function start_exam(mode) {
         document.getElementById('check-answer-button').style.display = 'inline-block';
     	}
 
+
+	create_navigation_menu();
 	start_timer();
     	show_question(current_question_index);
 	
@@ -716,34 +736,53 @@ function start_timer() {
     }, 1000);
 }
 
-
+function create_navigation_menu() {
+    var navMenu = document.getElementById('navigation-menu');
+    navMenu.innerHTML = '';
+    questions.forEach(function(_, index) {
+        var button = document.createElement('button');
+        button.innerText = index + 1;
+        button.classList.add('btn', 'btn-outline-secondary');
+        button.id = 'nav-btn-' + index;
+        button.onclick = function() {
+            current_question_index = index;
+            show_question(index);
+        };
+        navMenu.appendChild(button);
+    });
+}
 //////////////////////////////////////////////////
 function show_question(index) {
     var question_object = questions[index];
-    
-    question_number_el.innerText = 'Question '+(index + 1)+' of '+questions.length;
+    question_number_el.innerText = 'Question ' + (index + 1) + ' of ' + questions.length;
     question_el.innerText = question_object.question;
-    
     choises_el.innerHTML = '';
-    
+
     question_object.choices.forEach(function(choice, i) {
         var li = document.createElement('li');
         li.innerText = choice;
         li.onclick = function() { select_answer(i, index); };
         choises_el.appendChild(li);
     });
-    
+
     if (answered[index] != null) {
         choises_el.children[answered[index]].classList.add('selected');
     }
-	
-	if(index===0){
-		previous_button_el.style.display = 'none';
+
+    var navButtons = document.getElementById('navigation-menu').children;
+    for (var i = 0; i < navButtons.length; i++) {
+        navButtons[i].classList.remove('btn-primary');
+        navButtons[i].classList.add('btn-outline-secondary');
+    }
+    navButtons[index].classList.add('btn-primary');
+
+    if (index === 0) {
+        previous_button_el.style.display = 'none';
     } else {
         previous_button_el.style.display = 'inline-block';
     }
-	
-	if (questions.length === 1) {
+
+    if (questions.length === 1) {
         previous_button_el.style.display = 'none';
         document.querySelector('.btn-primary.ms-2').style.display = 'none'; 
     } else {
@@ -767,7 +806,10 @@ function select_answer(selected_index, question_index) {
     }
     choices_children[selected_index].classList.add('selected');
 
-    //if point was given remove it
+    var navButton = document.getElementById('nav-btn-' + question_index);
+    navButton.classList.remove('btn-outline-secondary');
+    navButton.classList.add('btn-success');
+
     if (previously_selected_answer != null) {
         if (previously_selected_answer === questions[question_index].correct_answer) {
             score--; 
